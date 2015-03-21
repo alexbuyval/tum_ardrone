@@ -1,0 +1,23 @@
+<launch>
+	<include file="$(find gazebo_simulation)/launch/ardrone_gazebo_marker.launch">
+	</include>
+	
+	<arg name="marker_size" default="4.4" />
+	<arg name="max_new_marker_error" default="0.08" />
+	<arg name="max_track_error" default="0.2" />
+	<arg name="cam_image_topic" default="/ardrone/bottom/image_raw" />
+	<arg name="cam_info_topic" default="/ardrone/bottom/camera_info" />	
+	<arg name="output_frame" default="/ardrone/bottom" />
+
+	<node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic) $(arg cam_info_topic) $(arg output_frame)" />
+	
+	<node name="beacon_localization" pkg="beacon_localization" type="beacon_localization_node" output="screen" respawn="true">
+	</node>
+	
+	<node name="drone_stateestimation" pkg="tum_ardrone" type="drone_stateestimation">
+	</node>
+	<node name="drone_autopilot" pkg="tum_ardrone" type="drone_autopilot">
+	</node>
+	<node name="drone_gui" pkg="tum_ardrone" type="drone_gui">
+	</node>
+</launch>
