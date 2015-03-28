@@ -28,6 +28,8 @@
 #include "tf/tfMessage.h"
 #include "tf/transform_listener.h"
 #include "tf/transform_broadcaster.h"
+#include "tf2_ros/buffer.h"
+#include "tf2_ros/transform_listener.h"
 #include "std_msgs/Empty.h"
 #include "std_srvs/Empty.h"
 #include "ardrone_autonomy/Navdata.h"
@@ -36,6 +38,7 @@
 #include <dynamic_reconfigure/server.h>
 #include "tum_ardrone/StateestimationParamsConfig.h"
 #include "TooN/se3.h"
+#include <ar_track_alvar_msgs/AlvarMarkers.h>
 
 
 class DroneKalmanFilter;
@@ -49,6 +52,8 @@ private:
 	ros::Subscriber navdata_sub; // drone navdata
 	ros::Subscriber vel_sub; // to co-read contro commands sent from other thread
 	ros::Subscriber vid_sub;
+    ros::Subscriber markers_sub; //ar_tag alvar data
+
 	ros::Time lastNavStamp;
 
 
@@ -64,7 +69,8 @@ private:
 
 	ros::NodeHandle nh_;
 
-	tf::TransformBroadcaster tf_broadcaster;
+
+
 
 	// parameters
 	// every [publishFreq]ms, the node publishes the drones predicted position [predTime]ms into the future.
@@ -101,11 +107,22 @@ public:
 	~EstimationNode();
 
 
+    tf2_ros::TransformBroadcaster br;
+    tf2_ros::Buffer tfBuffer;
+    tf2_ros::TransformListener* tfListener;
+
+    tf::TransformBroadcaster tf_broadcaster;
+    tf::TransformListener tfl;
+
+    ros::Publisher pose_pub;
+
+
 	// ROS message callbacks
 	void navdataCb(const ardrone_autonomy::NavdataConstPtr navdataPtr);
 	void velCb(const geometry_msgs::TwistConstPtr velPtr);
 	void vidCb(const sensor_msgs::ImageConstPtr img);
 	void comCb(const std_msgs::StringConstPtr str);
+    void markersCb(const ar_track_alvar_msgs::AlvarMarkersConstPtr markersPtr);
 	void dynConfCb(tum_ardrone::StateestimationParamsConfig &config, uint32_t level);
 
 	// main pose-estimation loop

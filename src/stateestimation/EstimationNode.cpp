@@ -80,16 +80,23 @@ EstimationNode::EstimationNode()
 		cout << "set calibFile to DEFAULT" << endl;
 
 
-	navdata_sub       = nh_.subscribe(navdata_channel, 10, &EstimationNode::navdataCb, this);
-	vel_sub          = nh_.subscribe(control_channel,10, &EstimationNode::velCb, this);
-	vid_sub          = nh_.subscribe(video_channel,10, &EstimationNode::vidCb, this);
+    navdata_sub       = nh_.subscribe(navdata_channel, 10, &EstimationNode::navdataCb, this);
+    vel_sub          = nh_.subscribe(control_channel,10, &EstimationNode::velCb, this);
+    vid_sub          = nh_.subscribe(video_channel,10, &EstimationNode::vidCb, this);
 
-	dronepose_pub	   = nh_.advertise<tum_ardrone::filter_state>(output_channel,1);
+    markers_sub       = nh_.subscribe("/ar_pose_marker", 10, &EstimationNode::markersCb, this);
+    pose_pub =  nh_.advertise<geometry_msgs::PoseStamped>("/pose_by_marker",1);
 
-	tum_ardrone_pub	   = nh_.advertise<std_msgs::String>(command_channel,50);
-	tum_ardrone_sub	   = nh_.subscribe(command_channel,50, &EstimationNode::comCb, this);
+    dronepose_pub	   = nh_.advertise<tum_ardrone::filter_state>(output_channel,1);
+
+    tum_ardrone_pub	   = nh_.advertise<std_msgs::String>(command_channel,50);
+    tum_ardrone_sub	   = nh_.subscribe(command_channel,50, &EstimationNode::comCb, this);
+
+
 
 	//tf_broadcaster();
+
+    tfListener = new tf2_ros::TransformListener(tfBuffer);
 
 	// other internal vars
 	logfileIMU = logfilePTAM = logfileFilter = logfilePTAMRaw = 0;
@@ -248,7 +255,13 @@ void EstimationNode::comCb(const std_msgs::StringConstPtr str)
 	{
 		filter->setPing((unsigned int)a, (unsigned int)b);
 		predTime = ros::Duration((0.001*filter->delayControl));	// set predTime to new delayControl
-	}
+    }
+}
+
+void EstimationNode::markersCb(const ar_track_alvar_msgs::AlvarMarkersConstPtr markersPtr)
+{
+    ROS_WARN("Marker callback");
+    filter->observeARtag(markersPtr);
 }
 
 

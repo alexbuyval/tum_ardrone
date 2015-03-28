@@ -42,6 +42,8 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>libqt4-dev</build_depend>
   <build_depend>atlas</build_depend>
+  <build_depend>tf2</build_depend>
+  <build_depend>ar_track_alvar</build_depend>
   <build_depend>liblapack-dev</build_depend>
   <build_depend>ardrone_autonomy</build_depend>
   <build_depend>cv_bridge</build_depend>
@@ -54,6 +56,8 @@
   <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>
   <run_depend>libqt4-dev</run_depend>
+  <run_depend>ar_track_alvar</run_depend>
+  <run_depend>tf2</run_depend>
   <run_depend>atlas</run_depend>
   <run_depend>liblapack-dev</run_depend>
   <run_depend>ardrone_autonomy</run_depend>

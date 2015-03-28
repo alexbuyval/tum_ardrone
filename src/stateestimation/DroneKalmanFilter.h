@@ -31,6 +31,7 @@
 #include <pthread.h>
 #include "../HelperFunctions.h"
 #include "tum_ardrone/filter_state.h"
+#include <ar_track_alvar_msgs/AlvarMarkers.h>
 
 class EstimationNode;
 
@@ -339,7 +340,7 @@ public:
 	int predictdUpToTimestamp;
 	int scalePairsIn, scalePairsOut;
 
-
+    void observeARtag(const ar_track_alvar_msgs::AlvarMarkersConstPtr markers); //TODO: use queue
 
 	// resets everything to zero.
 	void reset();

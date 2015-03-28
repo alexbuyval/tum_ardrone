@@ -464,7 +464,74 @@ void DroneKalmanFilter::observePTAM(TooN::Vector<6> pose)
 	}
 
 	last_fused_pose = TooN::makeVector(x.state[0], y.state[0], z.state[0]);
-	lastPosesValid = true;
+    lastPosesValid = true;
+}
+
+void DroneKalmanFilter::observeARtag(const ar_track_alvar_msgs::AlvarMarkersConstPtr markers)
+{
+
+    ROS_INFO("Observe ARTag");
+    if (markers->markers.size()>0)
+    {
+
+        geometry_msgs::TransformStamped transformStamped;
+
+        //Publish the transform from the world to the marker
+        std::string markerFrame = "ar_marker_";
+        std::stringstream out;
+        out << markers->markers[0].id;
+        std::string id_string = out.str();
+        markerFrame += id_string;
+
+        ROS_INFO("Publish global transfor for marker Id=%d", markers->markers[0].id);
+
+        transformStamped.header.stamp = ros::Time::now();
+        transformStamped.header.frame_id = markerFrame;
+        transformStamped.child_frame_id = "world";
+        transformStamped.transform.translation.x = 0.0;
+        transformStamped.transform.translation.y = 0.0;
+        transformStamped.transform.translation.z = 0.0;
+        tf2::Quaternion q;
+        q.setRPY(0, 0, 0);
+        transformStamped.transform.rotation.x = q.x();
+        transformStamped.transform.rotation.y = q.y();
+        transformStamped.transform.rotation.z = q.z();
+        transformStamped.transform.rotation.w = q.w();
+
+        //node->tf_broadcaster.sendTransform(transformStamped);
+        node->br.sendTransform(transformStamped);
+
+        geometry_msgs::TransformStamped transformStamped2;
+        try{
+            transformStamped2 = node->tfBuffer.lookupTransform("world", "ardrone_base_ardrone_bottomcam", ros::Time(0));
+
+            geometry_msgs::PoseStamped pose_msg;
+
+            pose_msg.header.stamp = ros::Time::now();
+            pose_msg.header.frame_id = "ardrone_base_ardrone_bottomcam";
+            pose_msg.pose.position.x = transformStamped2.transform.translation.x;
+            pose_msg.pose.position.y = transformStamped2.transform.translation.y;
+            pose_msg.pose.position.z = transformStamped2.transform.translation.z;
+            pose_msg.pose.orientation = transformStamped2.transform.rotation;
+            node->pose_pub.publish(pose_msg);
+
+        }
+        catch (tf2::TransformException &ex) {
+            ROS_ERROR("%s",ex.what());
+        }
+
+//        tf::StampedTransform transform;
+//        try{
+//            node->tfl.waitForTransform("world", "ardrone_base_ardrone_bottomcam", ros::Time(0), ros::Duration(1.0) );
+//            node->tfl.lookupTransform("world", "ardrone_base_ardrone_bottomcam",
+//                                      ros::Time(0), transform);
+//        }
+//        catch (tf::TransformException &ex) {
+//            ROS_ERROR("%s",ex.what());
+//        }
+
+    }
+
 }
 
 
