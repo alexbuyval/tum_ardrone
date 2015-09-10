@@ -67,6 +67,7 @@ private:
 	// output
 	ros::Publisher dronepose_pub;
 
+
 	ros::NodeHandle nh_;
 
 
@@ -115,6 +116,7 @@ public:
     tf::TransformListener tfl;
 
     ros::Publisher pose_pub;
+    ros::Publisher yaw_pub;
 
 
 	// ROS message callbacks

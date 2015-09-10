@@ -32,6 +32,7 @@
 #include "../HelperFunctions.h"
 #include "tum_ardrone/filter_state.h"
 #include <ar_track_alvar_msgs/AlvarMarkers.h>
+#include <tf2/LinearMath/Transform.h>
 
 class EstimationNode;
 
@@ -242,6 +243,8 @@ private:
 	PFilter pitch;
 	PVFilter yaw;
 
+    //ros parameters
+    std::string cameraLink;
 
 	// relation parameters (ptam to imu scale / offset)
 	double x_offset, y_offset, z_offset;

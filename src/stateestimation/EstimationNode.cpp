@@ -51,6 +51,7 @@ pthread_mutex_t EstimationNode::logPTAMRaw_CS = PTHREAD_MUTEX_INITIALIZER;
 
 EstimationNode::EstimationNode()
 {
+    ROS_INFO("Start of EstimationNode()");
     navdata_channel = nh_.resolveName("ardrone/navdata");
     control_channel = nh_.resolveName("cmd_vel");
     output_channel = nh_.resolveName("ardrone/predictedPose");
@@ -86,6 +87,7 @@ EstimationNode::EstimationNode()
 
     markers_sub       = nh_.subscribe("/ar_pose_marker", 10, &EstimationNode::markersCb, this);
     pose_pub =  nh_.advertise<geometry_msgs::PoseStamped>("/pose_by_marker",1);
+    yaw_pub =  nh_.advertise<geometry_msgs::PoseStamped>("/yaw_debug",1);
 
     dronepose_pub	   = nh_.advertise<tum_ardrone::filter_state>(output_channel,1);
 
@@ -110,6 +112,8 @@ EstimationNode::EstimationNode()
 	mapView = new MapView(filter, ptamWrapper, this);
 	arDroneVersion = 0;
 	//memset(&lastNavdataReceived,0,sizeof(ardrone_autonomy::Navdata));
+
+    ROS_INFO("End of EstimationNode()");
 
 
 }
@@ -274,43 +278,43 @@ void EstimationNode::Loop()
 	  while (nh_.ok())
 	  {
 		  // -------------- 1. put nav & control in internal queues. ---------------
-		  ros::spinOnce();
+          ros::spinOnce();
 
 
 		  // -------------- 3. get predicted pose and publish! ---------------
 		  // get filter state msg
-		  pthread_mutex_lock( &filter->filter_CS );
-		  tum_ardrone::filter_state s = filter->getPoseAt(ros::Time().now() + predTime);
-		  pthread_mutex_unlock( &filter->filter_CS );
+          pthread_mutex_lock( &filter->filter_CS );
+          tum_ardrone::filter_state s = filter->getPoseAt(ros::Time().now() + predTime);
+          pthread_mutex_unlock( &filter->filter_CS );
 
-		  // fill metadata
-		  s.header.stamp = ros::Time().now();
-		  s.scale = filter->getCurrentScales()[0];
-		  s.scaleAccuracy = filter->getScaleAccuracy();
-		  s.ptamState = ptamWrapper->PTAMStatus;
-		  s.droneState = lastNavdataReceived.state;
-		  s.batteryPercent = lastNavdataReceived.batteryPercent;
+          // fill metadata
+          s.header.stamp = ros::Time().now();
+          s.scale = filter->getCurrentScales()[0];
+          s.scaleAccuracy = filter->getScaleAccuracy();
+          s.ptamState = ptamWrapper->PTAMStatus;
+          s.droneState = lastNavdataReceived.state;
+          s.batteryPercent = lastNavdataReceived.batteryPercent;
 
-		  // publish!
-		  dronepose_pub.publish(s);
-
-
-		  // --------- if need be: add fake PTAM obs --------
-		  // if PTAM updates hang (no video or e.g. init), filter is never permanently rolled forward -> queues get too big.
-		  // dont allow this to happen by faking a ptam observation if queue gets too big (500ms = 100 observations)
-		  if((getMS(ros::Time().now()) - filter->predictdUpToTimestamp) > 500)
-			  filter->addFakePTAMObservation(getMS(ros::Time().now()) - 300);
+          // publish!
+          dronepose_pub.publish(s);
 
 
-		  // ---------- maybe send new info --------------------------
-		  if((ros::Time::now() - lastInfoSent) > ros::Duration(0.4))
-		  {
-			  reSendInfo();
-			  lastInfoSent = ros::Time::now();
-		  }
+          // --------- if need be: add fake PTAM obs --------
+          // if PTAM updates hang (no video or e.g. init), filter is never permanently rolled forward -> queues get too big.
+          // dont allow this to happen by faking a ptam observation if queue gets too big (500ms = 100 observations)
+          if((getMS(ros::Time().now()) - filter->predictdUpToTimestamp) > 500)
+              filter->addFakePTAMObservation(getMS(ros::Time().now()) - 300);
 
-		  // -------------- 4. sleep until rate is hit. ---------------
-		  pub_rate.sleep();
+
+          // ---------- maybe send new info --------------------------
+          if((ros::Time::now() - lastInfoSent) > ros::Duration(0.4))
+          {
+              reSendInfo();
+              lastInfoSent = ros::Time::now();
+          }
+
+          // -------------- 4. sleep until rate is hit. ---------------
+          pub_rate.sleep();
 	  }
 }
 void EstimationNode::dynConfCb(tum_ardrone::StateestimationParamsConfig &config, uint32_t level)

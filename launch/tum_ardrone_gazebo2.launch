@@ -12,14 +12,15 @@
 	<node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic) $(arg cam_info_topic) $(arg output_frame)" />
 		
 	<node name="drone_stateestimation" pkg="tum_ardrone" type="drone_stateestimation">
+	  <param name="camera_link" value="ardrone_base_ardrone_bottomcam" />
 	</node>
 	<node name="drone_autopilot" pkg="tum_ardrone" type="drone_autopilot">
 	</node>
 	<node name="drone_gui" pkg="tum_ardrone" type="drone_gui">
 	</node>
 	
-	<node pkg="rosbag" type="record" name="rosbag_record_topics"
-	  args="-o  test_marker_localization /ardrone/bottom/image_compressed /ar_pose_marker /pose_by_marker /tf"
-        />
+	<!--<node pkg="rosbag" type="record" name="rosbag_record_topics"
+	  args="-o  test_marker_localization /ardrone/bottom/image_raw /ar_pose_marker /pose_by_marker /ardrone/predictedPose /yaw_debug"
+        />-->
 	
 </launch>

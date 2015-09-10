@@ -23,7 +23,6 @@
 #include "PTAMWrapper.h"
 #include "MapView.h"
 
-
 // this global var is used in getMS(ros::Time t) to convert to a consistent integer timestamp used internally pretty much everywhere.
 // kind of an artifact from Windows-Version, where only that was available / used.
 unsigned int ros_header_timestamp_base = 0;
@@ -33,8 +32,6 @@ int main(int argc, char **argv)
 {
 
   ros::init(argc, argv, "drone_stateestimation");
-
-  ROS_INFO("Started TUM ArDrone Stateestimation Node.");
 
   EstimationNode estimator;
 
@@ -46,10 +43,10 @@ int main(int argc, char **argv)
   estimator.ptamWrapper->startSystem();
   estimator.mapView->startSystem();
 
-  estimator.Loop();
+ estimator.Loop();
 
-  estimator.mapView->stopSystem();
-  estimator.ptamWrapper->stopSystem();
+ estimator.mapView->stopSystem();
+ estimator.ptamWrapper->stopSystem();
 
   return 0;
 }

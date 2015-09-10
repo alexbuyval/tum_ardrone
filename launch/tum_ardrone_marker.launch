@@ -1,0 +1,52 @@
+<launch>
+	<node name="ardrone_driver" pkg="ardrone_autonomy" type="ardrone_driver" output="screen" clear_params="true">
+	    <param name="outdoor" value="0" />
+	    <param name="max_bitrate" value="3000" />
+	    <param name="bitrate" value="3000" />
+	    <param name="realtime_navdata" value="true" /> <!-- Добавлено -->
+	    <param name="navdata_demo" value="0" />
+	    <param name="flight_without_shell" value="0" />
+	    <param name="altitude_max" value="3000" />
+	    <param name="altitude_min" value="500" />
+	    <param name="euler_angle_max" value="0.21" />
+	    <param name="control_vz_max" value="700" />
+	    <param name="control_yaw" value="1.75" />
+	    <param name="detect_type" value="0" />
+	    <param name="enemy_colors" value="3" />
+	    <param name="detections_select_h" value="32" />
+	    <param name="detections_select_v_hsync" value="128" />
+	    <param name="enemy_without_shell" value="0" />
+	    <param name="do_imu_caliberation" value="true" />
+	    <param name="tf_prefix" value="mydrone" />
+	    <param name="enable_navdata_magneto" value="true" />
+	    <param name="enable_navdata_vision" value="true" />
+	    <param name="enable_navdata_phys_measures" value="true" />
+	    <param name="enable_navdata_altitude" value="true" />
+        <!--Covariance Values (3x3 matrices reshaped to 1x9)-->
+        <rosparam param="cov/imu_la">[0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.1]</rosparam>
+        <rosparam param="cov/imu_av">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]</rosparam>
+        <rosparam param="cov/imu_or">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 100000.0]</rosparam>
+	</node>
+	
+	<arg name="marker_size" default="4.4" />
+	<arg name="max_new_marker_error" default="0.08" />
+	<arg name="max_track_error" default="0.2" />
+	<arg name="cam_image_topic" default="/ardrone/front/image_raw" />
+	<arg name="cam_info_topic" default="/ardrone/front/camera_info" />	
+	<arg name="output_frame" default="/ardrone_base_frontcam" />
+
+	<node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic) $(arg cam_info_topic) $(arg output_frame)" />
+		
+	<node name="drone_stateestimation" pkg="tum_ardrone" type="drone_stateestimation">
+	    <param name="camera_link" value="ardrone_base_frontcam" />
+	</node>
+	<node name="drone_autopilot" pkg="tum_ardrone" type="drone_autopilot">
+	</node>
+	<node name="drone_gui" pkg="tum_ardrone" type="drone_gui">
+	</node>
+	
+	<!--<node pkg="rosbag" type="record" name="rosbag_record_topics"
+	  args="-o  test_marker_localization /ardrone/front/image_raw /ar_pose_marker /pose_by_marker /ardrone/predictedPose /yaw_debug /cmd_vel"
+        />-->
+	
+</launch>

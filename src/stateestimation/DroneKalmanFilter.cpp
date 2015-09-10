@@ -100,6 +100,8 @@ DroneKalmanFilter::DroneKalmanFilter(EstimationNode* n)
 	c7 = 1.4;
 	c8 = 1.0;
 
+    ros::param::get("~camera_link", cameraLink);
+
 }
 
 
@@ -503,17 +505,50 @@ void DroneKalmanFilter::observeARtag(const ar_track_alvar_msgs::AlvarMarkersCons
 
         geometry_msgs::TransformStamped transformStamped2;
         try{
-            transformStamped2 = node->tfBuffer.lookupTransform("world", "ardrone_base_ardrone_bottomcam", ros::Time(0));
+            //transformStamped2 = node->tfBuffer.lookupTransform("world", "ardrone_base_ardrone_bottomcam", ros::Time(0)); "ardrone_base_frontcam"
+            transformStamped2 = node->tfBuffer.lookupTransform("world", cameraLink , ros::Time(0));
 
             geometry_msgs::PoseStamped pose_msg;
 
             pose_msg.header.stamp = ros::Time::now();
-            pose_msg.header.frame_id = "ardrone_base_ardrone_bottomcam";
+            pose_msg.header.frame_id = "ardrone_base_frontcam"; //ardrone_base_ardrone_frontcam
             pose_msg.pose.position.x = transformStamped2.transform.translation.x;
             pose_msg.pose.position.y = transformStamped2.transform.translation.y;
             pose_msg.pose.position.z = transformStamped2.transform.translation.z;
             pose_msg.pose.orientation = transformStamped2.transform.rotation;
             node->pose_pub.publish(pose_msg);
+
+            x.observePose(transformStamped2.transform.translation.x,varPoseObservation_xy);
+            y.observePose(transformStamped2.transform.translation.y,varPoseObservation_xy);
+
+            double roll_, pitch_, yaw_, observedYaw;
+            tf::Quaternion q;
+            tf::quaternionMsgToTF(transformStamped2.transform.rotation, q);
+            tf::Matrix3x3(q).getRPY(roll_, pitch_, yaw_);
+
+            observedYaw = -yaw_ * 180.0 / M_PI;
+
+//            if(yaw.state[0] < -90)
+//                observedYaw = angleFromTo(observedYaw,-360,0);
+//            else if(yaw.state[0] > 90)
+//                observedYaw = angleFromTo(observedYaw,0,360);
+//            else
+//                observedYaw = angleFromTo(observedYaw,-180,180);
+
+            geometry_msgs::PoseStamped yaw_msg;
+
+            yaw_msg.header.stamp = ros::Time::now();
+            //yaw_msg.header.frame_id = "ardrone_base_ardrone_bottomcam";
+            yaw_msg.header.frame_id = cameraLink;
+            yaw_msg.pose.position.x = yaw.state[0];
+            yaw_msg.pose.position.y = observedYaw;
+            yaw_msg.pose.position.z = 0;
+            node->yaw_pub.publish(yaw_msg);
+
+
+            yaw.observePose(observedYaw,varPoseObservation_yaw);
+
+
 
         }
         catch (tf2::TransformException &ex) {
